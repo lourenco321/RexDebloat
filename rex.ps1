@@ -1,5 +1,5 @@
 # =====================================================================
-# Rex Windows 11 Debloat & Setup Script
+# Custom Windows 11 Debloat & Setup Script
 # =====================================================================
 
 # 1. Require Administrator Privileges
@@ -18,7 +18,11 @@ winget install --id 7zip.7zip -e --accept-package-agreements --accept-source-agr
 
 # 3. Remove Microsoft Edge
 Write-Host "`n[2/4] Removing Microsoft Edge..." -ForegroundColor Yellow
-Invoke-RestMethod -Uri "https://raw.githubusercontent.com/ChrisTitusTech/winutil/main/ps1/RemoveEdge.ps1" | Invoke-Expression
+# Finds the hidden Edge setup.exe and forces an unattended system-level uninstall
+$edgeSetup = Get-ChildItem -Path "C:\Program Files (x86)\Microsoft\Edge\Application\*\Installer\setup.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+if ($edgeSetup) {
+    Start-Process -FilePath $edgeSetup.FullName -ArgumentList "--uninstall --system-level --force-uninstall" -Wait -NoNewWindow
+}
 
 # 4. Windows 11 to Windows 10 Appearance (ExplorerPatcher)
 Write-Host "`n[3/4] Installing ExplorerPatcher (Windows 10 Look)..." -ForegroundColor Yellow
@@ -32,9 +36,9 @@ Remove-Item -Path $ep_path -Force
 
 # 5. Remove Major Bloat & Telemetry (Win11Debloat)
 Write-Host "`n[4/4] Running Win11Debloat by Raphire..." -ForegroundColor Yellow
-$Win11DebloatURL = "https://raw.githubusercontent.com/Raphire/Win11Debloat/master/Win11Debloat.ps1"
+$Win11DebloatURL = "https://debloat.raphi.re/"
 $DebloatScript = Invoke-RestMethod -Uri $Win11DebloatURL
-& ([scriptblock]::Create($DebloatScript)) -RunSystemDefaults -RemoveApps -DisableTelemetry -Silent
+& ([scriptblock]::Create($DebloatScript)) -RemoveApps -DisableTelemetry -Silent
 
 Write-Host "`n=====================================================================" -ForegroundColor Cyan
 Write-Host "Setup Complete! A system reboot is highly recommended." -ForegroundColor Green
