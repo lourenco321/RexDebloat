@@ -1,5 +1,5 @@
 # =====================================================================
-# Custom Windows 11 Debloat & Setup Script - V8 (Extended)
+# Custom Windows 11 Debloat & Setup Script - V9 (Extended)
 # =====================================================================
 
 if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
@@ -11,18 +11,18 @@ if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]:
 Write-Host "Starting Custom Windows 11 Setup..." -ForegroundColor Cyan
 
 # 1. Install Essential Software
-Write-Host "`n[1/6] Installing Firefox and 7-Zip..." -ForegroundColor Yellow
+Write-Host "`n[1/7] Installing Firefox and 7-Zip..." -ForegroundColor Yellow
 winget install --id Mozilla.Firefox -e --accept-package-agreements --accept-source-agreements
 winget install --id 7zip.7zip -e --accept-package-agreements --accept-source-agreements
 
 # 2. Run Win11Debloat
-Write-Host "`n[2/6] Running Win11Debloat by Raphire..." -ForegroundColor Yellow
+Write-Host "`n[2/7] Running Win11Debloat by Raphire..." -ForegroundColor Yellow
 $Win11DebloatURL = "https://debloat.raphi.re/"
 $DebloatScript = Invoke-RestMethod -Uri $Win11DebloatURL
 & ([scriptblock]::Create($DebloatScript)) -RemoveApps -DisableTelemetry -Silent
 
 # 3. Windows 11 to Windows 10 Appearance
-Write-Host "`n[3/6] Applying Windows 10 Appearance Tweaks..." -ForegroundColor Yellow
+Write-Host "`n[3/7] Applying Windows 10 Appearance Tweaks..." -ForegroundColor Yellow
 $contextMenuPath = "HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32"
 if (!(Test-Path $contextMenuPath)) { New-Item -Path $contextMenuPath -Force | Out-Null }
 Set-ItemProperty -Path $contextMenuPath -Name "(Default)" -Value "" -Force | Out-Null
@@ -42,8 +42,8 @@ $dwmPath = "HKCU:\SOFTWARE\Microsoft\Windows\DWM"
 if (!(Test-Path $dwmPath)) { New-Item -Path $dwmPath -Force | Out-Null }
 Set-ItemProperty -Path $dwmPath -Name "ColorPrevalence" -Value 1
 
-# 4. Quality of Life Tweaks (Explorer, Taskbar, Silent Installs)
-Write-Host "`n[4/6] Applying Quality of Life Tweaks..." -ForegroundColor Yellow
+# 4. Quality of Life Tweaks
+Write-Host "`n[4/7] Applying Quality of Life Tweaks..." -ForegroundColor Yellow
 $contentDelivery = "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager"
 if (!(Test-Path $contentDelivery)) { New-Item -Path $contentDelivery -Force | Out-Null }
 Set-ItemProperty -Path $contentDelivery -Name "SilentInstalledAppsEnabled" -Value 0 -Force | Out-Null
@@ -62,8 +62,26 @@ $galleryPath = "HKCU:\Software\Classes\CLSID\{e88865ea-0e1c-4e20-9aa6-edcd0212c8
 if (!(Test-Path $galleryPath)) { New-Item -Path $galleryPath -Force | Out-Null }
 Set-ItemProperty -Path $galleryPath -Name "System.IsPinnedToNameSpaceTree" -Value 0 -Type DWord -Force | Out-Null
 
-# 5. Remove Microsoft OneDrive
-Write-Host "`n[5/6] Removing Microsoft OneDrive..." -ForegroundColor Yellow
+# 5. System Time & Power Settings
+Write-Host "`n[5/7] Configuring Automatic Time and High Performance Power Plan..." -ForegroundColor Yellow
+Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\W32Time\Parameters" -Name "Type" -Value "NTP" -Force
+Set-Service -Name w32time -StartupType Automatic
+Start-Service -Name w32time -ErrorAction SilentlyContinue
+w32tm /resync /force | Out-Null
+
+Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\tzautoupdate" -Name "Start" -Value 3 -Force
+Start-Service -Name tzautoupdate -ErrorAction SilentlyContinue
+
+powercfg /setactive SCHEME_MIN
+powercfg /change monitor-timeout-ac 0
+powercfg /change monitor-timeout-dc 0
+powercfg /change standby-timeout-ac 0
+powercfg /change standby-timeout-dc 0
+powercfg /change hibernate-timeout-ac 0
+powercfg /change hibernate-timeout-dc 0
+
+# 6. Remove Microsoft OneDrive
+Write-Host "`n[6/7] Removing Microsoft OneDrive..." -ForegroundColor Yellow
 Get-Process -Name "OneDrive" -ErrorAction SilentlyContinue | Stop-Process -Force
 $oneDriveSetup = "$env:systemroot\SysWOW64\OneDriveSetup.exe"
 if (!(Test-Path $oneDriveSetup)) { $oneDriveSetup = "$env:systemroot\System32\OneDriveSetup.exe" }
@@ -72,8 +90,8 @@ if (Test-Path $oneDriveSetup) {
 }
 Remove-Item -Path "$env:USERPROFILE\OneDrive" -Force -Recurse -ErrorAction SilentlyContinue
 
-# 6. Remove Microsoft Edge
-Write-Host "`n[6/6] Removing Microsoft Edge..." -ForegroundColor Yellow
+# 7. Remove Microsoft Edge
+Write-Host "`n[7/7] Removing Microsoft Edge..." -ForegroundColor Yellow
 $forceRemove = $true
 $edgeSetup = Get-ChildItem -Path "C:\Program Files (x86)\Microsoft\Edge\Application\*\Installer\setup.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
 
