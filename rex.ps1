@@ -1,5 +1,5 @@
 # =====================================================================
-# Custom Windows 11 Debloat & Setup Script - V17 (Probably NOT Final)
+# Custom Windows 11 Debloat & Setup Script - V18 (Finaly FREEEEEE!)
 # =====================================================================
 
 if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
@@ -23,8 +23,6 @@ foreach ($app in $machineApps) {
     winget install --id $app -e --accept-package-agreements --accept-source-agreements
 }
 
-Write-Host "Installing Spotify (User Scope)..." -ForegroundColor Yellow
-winget install --id Spotify.Spotify -e --accept-package-agreements --accept-source-agreements --scope user
 
 # 2. Run Win11Debloat
 Write-Host "`n[2/9] Running Win11Debloat by Raphire..." -ForegroundColor Yellow
