@@ -1,5 +1,5 @@
 # =====================================================================
-# Custom Windows 11 Debloat & Setup Script - V16 (Probably NOT Final)
+# Custom Windows 11 Debloat & Setup Script - V17 (Probably NOT Final)
 # =====================================================================
 
 if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
@@ -64,6 +64,7 @@ $explorerAdvanced = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Ad
 Set-ItemProperty -Path $explorerAdvanced -Name "LaunchTo" -Value 1 -Force | Out-Null
 Set-ItemProperty -Path $explorerAdvanced -Name "Start_TrackDocs" -Value 0 -Force | Out-Null
 Set-ItemProperty -Path $explorerAdvanced -Name "HideFileExt" -Value 0 -Force | Out-Null
+Set-ItemProperty -Path $explorerAdvanced -Name "ShowTaskViewButton" -Value 0 -Force | Out-Null
 
 $dshPolicy = "HKLM:\SOFTWARE\Policies\Microsoft\Dsh"
 if (!(Test-Path $dshPolicy)) { New-Item -Path $dshPolicy -Force | Out-Null }
@@ -85,7 +86,6 @@ Set-ItemProperty -Path $mousePath -Name "MouseThreshold2" -Value "0" -Force | Ou
 $taskbandPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Taskband"
 if (Test-Path $taskbandPath) { Remove-Item -Path $taskbandPath -Recurse -Force -ErrorAction SilentlyContinue }
 
-# Force System Tray and Network/Volume icons to be visible
 $explorerMain = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer"
 Set-ItemProperty -Path $explorerMain -Name "EnableAutoTray" -Value 0 -Force | Out-Null
 
