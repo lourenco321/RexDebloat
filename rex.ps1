@@ -1,5 +1,5 @@
 # =====================================================================
-# Custom Windows 11 Debloat & Setup Script - V9 (Extended)
+# Custom Windows 11 Debloat & Setup Script - V10 (Final)
 # =====================================================================
 
 if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
@@ -51,8 +51,12 @@ Set-ItemProperty -Path $contentDelivery -Name "SystemPaneSuggestionsEnabled" -Va
 
 $explorerAdvanced = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced"
 Set-ItemProperty -Path $explorerAdvanced -Name "LaunchTo" -Value 1 -Force | Out-Null
-Set-ItemProperty -Path $explorerAdvanced -Name "TaskbarDa" -Value 0 -Force | Out-Null
 Set-ItemProperty -Path $explorerAdvanced -Name "Start_TrackDocs" -Value 0 -Force | Out-Null
+
+# Disable Widgets via System Policy to avoid Unauthorized Access errors
+$dshPolicy = "HKLM:\SOFTWARE\Policies\Microsoft\Dsh"
+if (!(Test-Path $dshPolicy)) { New-Item -Path $dshPolicy -Force | Out-Null }
+Set-ItemProperty -Path $dshPolicy -Name "AllowNewsAndInterests" -Value 0 -Type DWord -Force | Out-Null
 
 $searchPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Search"
 if (!(Test-Path $searchPath)) { New-Item -Path $searchPath -Force | Out-Null }
