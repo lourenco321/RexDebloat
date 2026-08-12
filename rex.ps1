@@ -1,5 +1,5 @@
 # =====================================================================
-# Custom Windows 11 Debloat & Setup Script - V6
+# Custom Windows 11 Debloat & Setup Script - V7 (Final)
 # =====================================================================
 
 if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
@@ -77,9 +77,6 @@ if ($forceRemove) {
     New-ItemProperty -Path $regPath -Name "DoNotUpdateToEdgeWithChromium" -Value 1 -PropertyType DWord -Force | Out-Null
 }
 
-Write-Host "`nRestarting Windows Explorer to apply all changes..." -ForegroundColor Yellow
-Get-Process -Name explorer -ErrorAction SilentlyContinue | Stop-Process -Force
-
 Write-Host "`n=====================================================================" -ForegroundColor Cyan
-Write-Host "Setup Complete! A system reboot is highly recommended." -ForegroundColor Green
+Write-Host "Setup Complete! Please restart your PC to apply all visual changes." -ForegroundColor Green
 Write-Host "=====================================================================" -ForegroundColor Cyan
