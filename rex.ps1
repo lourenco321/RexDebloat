@@ -1,5 +1,5 @@
 # =====================================================================
-# Custom Windows 11 Debloat & Setup Script - V13 (Its Friday day...)
+# Custom Windows 11 Debloat & Setup Script - V16 (Probably NOT Final)
 # =====================================================================
 
 if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
@@ -11,26 +11,29 @@ if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]:
 Write-Host "Starting Custom Windows 11 Setup..." -ForegroundColor Cyan
 
 # 1. Install Essential Software & Apps
-Write-Host "`n[1/10] Installing Firefox, 7-Zip, Spotify, Discord, and Steam..." -ForegroundColor Yellow
-$apps = @(
+Write-Host "`n[1/9] Installing Essential Software..." -ForegroundColor Yellow
+$machineApps = @(
     "Mozilla.Firefox",
     "7zip.7zip",
-    "Spotify.Spotify",
     "Discord.Discord",
-    "Valve.Steam"
+    "Valve.Steam",
+    "Microsoft.VCRedist.2015+.x64"
 )
-foreach ($app in $apps) {
+foreach ($app in $machineApps) {
     winget install --id $app -e --accept-package-agreements --accept-source-agreements
 }
 
+Write-Host "Installing Spotify (User Scope)..." -ForegroundColor Yellow
+winget install --id Spotify.Spotify -e --accept-package-agreements --accept-source-agreements --scope user
+
 # 2. Run Win11Debloat
-Write-Host "`n[2/10] Running Win11Debloat by Raphire..." -ForegroundColor Yellow
+Write-Host "`n[2/9] Running Win11Debloat by Raphire..." -ForegroundColor Yellow
 $Win11DebloatURL = "https://debloat.raphi.re/"
 $DebloatScript = Invoke-RestMethod -Uri $Win11DebloatURL
 & ([scriptblock]::Create($DebloatScript)) -RemoveApps -DisableTelemetry -Silent
 
 # 3. Windows 11 to Windows 10 Appearance
-Write-Host "`n[3/10] Applying Windows 10 Appearance Tweaks..." -ForegroundColor Yellow
+Write-Host "`n[3/9] Applying Windows 10 Appearance Tweaks..." -ForegroundColor Yellow
 $contextMenuPath = "HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32"
 if (!(Test-Path $contextMenuPath)) { New-Item -Path $contextMenuPath -Force | Out-Null }
 Set-ItemProperty -Path $contextMenuPath -Name "(Default)" -Value "" -Force | Out-Null
@@ -51,7 +54,7 @@ if (!(Test-Path $dwmPath)) { New-Item -Path $dwmPath -Force | Out-Null }
 Set-ItemProperty -Path $dwmPath -Name "ColorPrevalence" -Value 1
 
 # 4. Quality of Life Tweaks
-Write-Host "`n[4/10] Applying Quality of Life Tweaks..." -ForegroundColor Yellow
+Write-Host "`n[4/9] Applying Quality of Life Tweaks..." -ForegroundColor Yellow
 $contentDelivery = "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager"
 if (!(Test-Path $contentDelivery)) { New-Item -Path $contentDelivery -Force | Out-Null }
 Set-ItemProperty -Path $contentDelivery -Name "SilentInstalledAppsEnabled" -Value 0 -Force | Out-Null
@@ -79,8 +82,20 @@ Set-ItemProperty -Path $mousePath -Name "MouseSpeed" -Value "0" -Force | Out-Nul
 Set-ItemProperty -Path $mousePath -Name "MouseThreshold1" -Value "0" -Force | Out-Null
 Set-ItemProperty -Path $mousePath -Name "MouseThreshold2" -Value "0" -Force | Out-Null
 
+$taskbandPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Taskband"
+if (Test-Path $taskbandPath) { Remove-Item -Path $taskbandPath -Recurse -Force -ErrorAction SilentlyContinue }
+
+# Force System Tray and Network/Volume icons to be visible
+$explorerMain = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer"
+Set-ItemProperty -Path $explorerMain -Name "EnableAutoTray" -Value 0 -Force | Out-Null
+
+$explorerPolicy = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer"
+if (!(Test-Path $explorerPolicy)) { New-Item -Path $explorerPolicy -Force | Out-Null }
+Set-ItemProperty -Path $explorerPolicy -Name "HideSCANetwork" -Value 0 -Type DWord -Force | Out-Null
+Set-ItemProperty -Path $explorerPolicy -Name "HideSCAVolume" -Value 0 -Type DWord -Force | Out-Null
+
 # 5. System Time & Power Settings
-Write-Host "`n[5/10] Configuring Automatic Time and High Performance Power Plan..." -ForegroundColor Yellow
+Write-Host "`n[5/9] Configuring Automatic Time and High Performance Power Plan..." -ForegroundColor Yellow
 Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\W32Time\Parameters" -Name "Type" -Value "NTP" -Force
 Set-Service -Name w32time -StartupType Automatic
 Start-Service -Name w32time -ErrorAction SilentlyContinue
@@ -97,16 +112,8 @@ powercfg /change standby-timeout-dc 0
 powercfg /change hibernate-timeout-ac 0
 powercfg /change hibernate-timeout-dc 0
 
-# 6. Windows Update Policy (Security Updates Only)
-Write-Host "`n[6/10] Configuring Windows Update Policies..." -ForegroundColor Yellow
-$wuPolicy = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate"
-if (!(Test-Path $wuPolicy)) { New-Item -Path $wuPolicy -Force -Recurse | Out-Null }
-Set-ItemProperty -Path $wuPolicy -Name "DeferFeatureUpdates" -Value 1 -Type DWord -Force | Out-Null
-Set-ItemProperty -Path $wuPolicy -Name "DeferFeatureUpdatesPeriodInDays" -Value 365 -Type DWord -Force | Out-Null
-Set-ItemProperty -Path $wuPolicy -Name "BranchReadinessLevel" -Value 32 -Type DWord -Force | Out-Null
-
-# 7. Remove Microsoft OneDrive
-Write-Host "`n[7/10] Removing Microsoft OneDrive..." -ForegroundColor Yellow
+# 6. Remove Microsoft OneDrive
+Write-Host "`n[6/9] Removing Microsoft OneDrive..." -ForegroundColor Yellow
 Get-Process -Name "OneDrive" -ErrorAction SilentlyContinue | Stop-Process -Force
 $oneDriveSetup = "$env:systemroot\SysWOW64\OneDriveSetup.exe"
 if (!(Test-Path $oneDriveSetup)) { $oneDriveSetup = "$env:systemroot\System32\OneDriveSetup.exe" }
@@ -115,8 +122,8 @@ if (Test-Path $oneDriveSetup) {
 }
 Remove-Item -Path "$env:USERPROFILE\OneDrive" -Force -Recurse -ErrorAction SilentlyContinue
 
-# 8. Remove Microsoft Edge
-Write-Host "`n[8/10] Removing Microsoft Edge..." -ForegroundColor Yellow
+# 7. Remove Microsoft Edge
+Write-Host "`n[7/9] Removing Microsoft Edge..." -ForegroundColor Yellow
 $forceRemove = $true
 $edgeSetup = Get-ChildItem -Path "C:\Program Files (x86)\Microsoft\Edge\Application\*\Installer\setup.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
 
@@ -146,8 +153,8 @@ if ($forceRemove) {
     New-ItemProperty -Path $regPath -Name "DoNotUpdateToEdgeWithChromium" -Value 1 -PropertyType DWord -Force | Out-Null
 }
 
-# 9. Download BurntSushi to Startup
-Write-Host "`n[9/10] Downloading BurntSushi to Startup Folder..." -ForegroundColor Yellow
+# 8. Download BurntSushi to Startup
+Write-Host "`n[8/9] Downloading BurntSushi to Startup Folder..." -ForegroundColor Yellow
 $startupFolder = "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Startup"
 $burntSushiUrl = "https://github.com/OpenByteDev/burnt-sushi/releases/latest/download/BurntSushi.exe"
 $burntSushiPath = Join-Path -Path $startupFolder -ChildPath "BurntSushi.exe"
@@ -158,20 +165,18 @@ try {
     Write-Host "Failed to download BurntSushi. Please check the repository URL." -ForegroundColor Red
 }
 
-# 10. Set Desktop Background & Lock Screen
-Write-Host "`n[10/10] Applying Custom Wallpaper and Lock Screen..." -ForegroundColor Yellow
+# 9. Set Desktop Background & Lock Screen
+Write-Host "`n[9/9] Applying Custom Wallpaper and Lock Screen..." -ForegroundColor Yellow
 $bgUrl = "https://raw.githubusercontent.com/lourenco321/RexDebloat/main/bg.png"
 $bgPath = "$env:USERPROFILE\Pictures\RexBackground.png"
 
 try {
     Invoke-WebRequest -Uri $bgUrl -OutFile $bgPath -ErrorAction Stop
     
-    # Set Lock Screen via Policy
     $personalizationPolicy = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Personalization"
     if (!(Test-Path $personalizationPolicy)) { New-Item -Path $personalizationPolicy -Force | Out-Null }
     Set-ItemProperty -Path $personalizationPolicy -Name "LockScreenImage" -Value $bgPath -Type String -Force | Out-Null
     
-    # Set Desktop Wallpaper via C# injection
     $cSharp = @"
     using System;
     using System.Runtime.InteropServices;
