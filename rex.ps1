@@ -1,5 +1,5 @@
 # =====================================================================
-# Custom Windows 11 Debloat & Setup Script - V3
+# Custom Windows 11 Debloat & Setup Script - V4
 # =====================================================================
 
 if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
@@ -21,13 +21,20 @@ $Win11DebloatURL = "https://debloat.raphi.re/"
 $DebloatScript = Invoke-RestMethod -Uri $Win11DebloatURL
 & ([scriptblock]::Create($DebloatScript)) -RemoveApps -DisableTelemetry -Silent
 
-# 3. Windows 11 to Windows 10 Appearance
+# 3. Windows 11 to Windows 10 Appearance & Color Fixes
 Write-Host "`n[3/4] Installing ExplorerPatcher (Windows 10 Look)..." -ForegroundColor Yellow
 $ep_url = "https://github.com/valinet/ExplorerPatcher/releases/latest/download/ep_setup.exe"
 $ep_path = "$env:TEMP\ep_setup.exe"
 Invoke-WebRequest -Uri $ep_url -OutFile $ep_path
 Start-Process -FilePath $ep_path -ArgumentList "/S" -Wait
 Remove-Item -Path $ep_path -Force
+
+# Fix taskbar colors for Wallpaper Engine
+$personalizePath = "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize"
+if (!(Test-Path $personalizePath)) { New-Item -Path $personalizePath -Force | Out-Null }
+Set-ItemProperty -Path $personalizePath -Name "SystemUsesLightTheme" -Value 0 # Forces Taskbar to Dark Mode
+Set-ItemProperty -Path $personalizePath -Name "ColorPrevalence" -Value 1 # Applies Accent Color to Taskbar
+Set-ItemProperty -Path $personalizePath -Name "EnableTransparency" -Value 1 # Enables Transparency
 
 # 4. Remove Microsoft Edge (Clean Uninstall with Forceful Fallback)
 Write-Host "`n[4/4] Removing Microsoft Edge..." -ForegroundColor Yellow
@@ -59,6 +66,9 @@ if ($forceRemove) {
     if (!(Test-Path $regPath)) { New-Item -Path $regPath -Force | Out-Null }
     New-ItemProperty -Path $regPath -Name "DoNotUpdateToEdgeWithChromium" -Value 1 -PropertyType DWord -Force | Out-Null
 }
+
+Write-Host "`nRestarting Windows Explorer to apply color changes..." -ForegroundColor Yellow
+Get-Process -Name explorer -ErrorAction SilentlyContinue | Stop-Process -Force
 
 Write-Host "`n=====================================================================" -ForegroundColor Cyan
 Write-Host "Setup Complete! A system reboot is highly recommended." -ForegroundColor Green
