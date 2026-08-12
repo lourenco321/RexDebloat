@@ -1,5 +1,5 @@
 # =====================================================================
-# Custom Windows 11 Debloat & Setup Script - V5
+# Custom Windows 11 Debloat & Setup Script - V6
 # =====================================================================
 
 if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
@@ -21,14 +21,20 @@ $Win11DebloatURL = "https://debloat.raphi.re/"
 $DebloatScript = Invoke-RestMethod -Uri $Win11DebloatURL
 & ([scriptblock]::Create($DebloatScript)) -RemoveApps -DisableTelemetry -Silent
 
-# 3. Windows 11 to Windows 10 Appearance & Color Settings
-Write-Host "`n[3/4] Installing ExplorerPatcher (Windows 10 Look)..." -ForegroundColor Yellow
-$ep_url = "https://github.com/valinet/ExplorerPatcher/releases/latest/download/ep_setup.exe"
-$ep_path = "$env:TEMP\ep_setup.exe"
-Invoke-WebRequest -Uri $ep_url -OutFile $ep_path
-Start-Process -FilePath $ep_path -ArgumentList "/S" -Wait
-Remove-Item -Path $ep_path -Force
+# 3. Windows 11 to Windows 10 Appearance (Talon Native Method)
+Write-Host "`n[3/4] Applying Windows 10 Appearance Tweaks..." -ForegroundColor Yellow
 
+# Restore Windows 10 Right-Click Context Menu
+$contextMenuPath = "HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32"
+if (!(Test-Path $contextMenuPath)) { New-Item -Path $contextMenuPath -Force | Out-Null }
+Set-ItemProperty -Path $contextMenuPath -Name "(Default)" -Value "" -Force | Out-Null
+
+# Left-Align the Taskbar (Windows 10 Style)
+$taskbarPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced"
+if (!(Test-Path $taskbarPath)) { New-Item -Path $taskbarPath -Force | Out-Null }
+Set-ItemProperty -Path $taskbarPath -Name "TaskbarAl" -Value 0 -Force | Out-Null
+
+# Apply Dark Mode, Transparency, and Accent Colors for Wallpaper Engine
 $personalizePath = "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize"
 if (!(Test-Path $personalizePath)) { New-Item -Path $personalizePath -Force | Out-Null }
 Set-ItemProperty -Path $personalizePath -Name "SystemUsesLightTheme" -Value 0 
@@ -71,7 +77,7 @@ if ($forceRemove) {
     New-ItemProperty -Path $regPath -Name "DoNotUpdateToEdgeWithChromium" -Value 1 -PropertyType DWord -Force | Out-Null
 }
 
-Write-Host "`nRestarting Windows Explorer to apply color changes..." -ForegroundColor Yellow
+Write-Host "`nRestarting Windows Explorer to apply all changes..." -ForegroundColor Yellow
 Get-Process -Name explorer -ErrorAction SilentlyContinue | Stop-Process -Force
 
 Write-Host "`n=====================================================================" -ForegroundColor Cyan
