@@ -1,5 +1,5 @@
 # =====================================================================
-# Custom Windows 11 Debloat & Setup Script - V4
+# Custom Windows 11 Debloat & Setup Script - V5
 # =====================================================================
 
 if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
@@ -21,7 +21,7 @@ $Win11DebloatURL = "https://debloat.raphi.re/"
 $DebloatScript = Invoke-RestMethod -Uri $Win11DebloatURL
 & ([scriptblock]::Create($DebloatScript)) -RemoveApps -DisableTelemetry -Silent
 
-# 3. Windows 11 to Windows 10 Appearance & Color Fixes
+# 3. Windows 11 to Windows 10 Appearance & Color Settings
 Write-Host "`n[3/4] Installing ExplorerPatcher (Windows 10 Look)..." -ForegroundColor Yellow
 $ep_url = "https://github.com/valinet/ExplorerPatcher/releases/latest/download/ep_setup.exe"
 $ep_path = "$env:TEMP\ep_setup.exe"
@@ -29,12 +29,16 @@ Invoke-WebRequest -Uri $ep_url -OutFile $ep_path
 Start-Process -FilePath $ep_path -ArgumentList "/S" -Wait
 Remove-Item -Path $ep_path -Force
 
-# Fix taskbar colors for Wallpaper Engine
 $personalizePath = "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize"
 if (!(Test-Path $personalizePath)) { New-Item -Path $personalizePath -Force | Out-Null }
-Set-ItemProperty -Path $personalizePath -Name "SystemUsesLightTheme" -Value 0 # Forces Taskbar to Dark Mode
-Set-ItemProperty -Path $personalizePath -Name "ColorPrevalence" -Value 1 # Applies Accent Color to Taskbar
-Set-ItemProperty -Path $personalizePath -Name "EnableTransparency" -Value 1 # Enables Transparency
+Set-ItemProperty -Path $personalizePath -Name "SystemUsesLightTheme" -Value 0 
+Set-ItemProperty -Path $personalizePath -Name "AppsUseLightTheme" -Value 0 
+Set-ItemProperty -Path $personalizePath -Name "EnableTransparency" -Value 1 
+Set-ItemProperty -Path $personalizePath -Name "ColorPrevalence" -Value 1 
+
+$dwmPath = "HKCU:\SOFTWARE\Microsoft\Windows\DWM"
+if (!(Test-Path $dwmPath)) { New-Item -Path $dwmPath -Force | Out-Null }
+Set-ItemProperty -Path $dwmPath -Name "ColorPrevalence" -Value 1
 
 # 4. Remove Microsoft Edge (Clean Uninstall with Forceful Fallback)
 Write-Host "`n[4/4] Removing Microsoft Edge..." -ForegroundColor Yellow
